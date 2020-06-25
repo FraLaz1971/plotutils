@@ -1,0 +1,5 @@
+Tektable.o: Tektable.c /usr/include/stdc-predef.h Tekparse.h
+
+/usr/include/stdc-predef.h:
+
+Tekparse.h:
