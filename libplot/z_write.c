@@ -85,6 +85,11 @@ static void zwrite_error_fn(png_structp png_ptr, png_const_charp error_msg) {
 #endif
 }
 
+#define PNG_PTR 1
+#define PNGSIGSIZE 8
+
+  
+
 
 static const char _short_months[12][4] = 
 { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
@@ -112,7 +117,11 @@ _pl_z_maybe_output_image (S___(Plotter *_plotter))
   png_text text_ptr[10];
   time_t clock;
   struct tm *tmsp;
-  FILE *fp = _plotter->data->outfp;
+#ifdef MINGW
+  FILE *tempfp ;
+#else
+  FILE *fp = _plotter->data->outfp; 
+#endif
   FILE *errorfp = _plotter->data->errfp;
   void *error_ptr;
   png_error_ptr error_fn_ptr, warn_fn_ptr;
@@ -122,10 +131,18 @@ _pl_z_maybe_output_image (S___(Plotter *_plotter))
 #endif
 
 #ifdef LIBPLOTTER
+#ifdef MINGW /* handle buggy stdout png printing on mingw*/
+  if (tempfp == (FILE *)NULL && stream == (ostream *)NULL)
+#else
   if (fp == (FILE *)NULL && stream == (ostream *)NULL)
+#endif /* end MINGW*/
     return 0;
 #else
+#ifdef MINGW /* handle buggy stdout png printing on mingw*/
+  if (tempfp == (FILE *)NULL)
+#else
   if (fp == (FILE *)NULL)
+#endif /* end MINGW*/
     return 0;
 #endif
   
@@ -170,30 +187,46 @@ _pl_z_maybe_output_image (S___(Plotter *_plotter))
 #endif /* not LIBPLOTTER */
 
   /* create png_struct, install error/warning handlers */
+#ifdef MINGW /* handle buggy MINGW build and prints only on disk file*/
+  char* tfile_name = "tempout.png";
+  tempfp = fopen(tfile_name, "wb");
+#endif
+/* stdout is always open */
+
   png_ptr = png_create_write_struct (PNG_LIBPNG_VER_STRING,
 				     error_ptr, 
 				     error_fn_ptr, warn_fn_ptr);
-  if (png_ptr == (png_struct *)NULL)
-    return -1;
-
+  
+  
+  if (png_ptr == (png_struct *)NULL){
+        return -1;
+        zwrite_error_fn(png_ptr, "error in creating png struct\n");
+  } else
+  {
+      int pv = (int)png_ptr;
+      fprintf(stderr, "libpng version %s png struct pointer created = %p \n", PNG_LIBPNG_VER_STRING, png_ptr);      
+  }
   /* allocate/initialize image information data */
   info_ptr = png_create_info_struct (png_ptr);
   if (info_ptr == (png_info *)NULL)
     {
       png_destroy_write_struct (&png_ptr, (png_info **)NULL);
+      zwrite_error_fn(png_ptr, "error in creating png info struct\n");
       return -1;
+    } else{
+      fprintf(stderr, "libpng version %s png info struct pointer created = %p\n", PNG_LIBPNG_VER_STRING, info_ptr);              
     }
-#ifdef PNG_PTR
     
+#ifdef PNG_PTR
   /* cleanup after libpng errors (error handler does a longjmp) */
    if (setjmp (png_jmpbuf(png_ptr)))
      {
 #endif /* not PNG_PTR */
-      fprintf (stderr, "libplot: libpng %s error:  PNG_PTR not defined \n", PNG_LIBPNG_VER_STRING);
+      fprintf (stderr, "libplot: libpng %s info: going to destroy png \n", PNG_LIBPNG_VER_STRING);
       png_destroy_write_struct (&png_ptr, (png_info **)NULL);
       return -1;
 #ifdef PNG_PTR
-      fprintf (stderr, "libplot: libpng %s error:  PNG_PTR defined \n", PNG_LIBPNG_VER_STRING);
+      fprintf (stderr, "libplot: libpng %s info:  PNG_PTR defined \n", PNG_LIBPNG_VER_STRING);
     }
 #endif /* not PNG_PTR */
   
@@ -208,13 +241,23 @@ _pl_z_maybe_output_image (S___(Plotter *_plotter))
     }
   else
     /* must have fp!=NULL, so use default stdio-based output */
-    png_init_io (png_ptr, fp);
-
+#ifdef MINGW /* MINGW build prints png only to disk file*/
+    png_init_io (png_ptr, tempfp);
+#else
+    png_init_io (png_ptr, fp); /* in Linux & Mac build png on stdout+file through > are ok*/
+#endif /* end MINGW */
+  
 #else  /* not LIBPLOTTER */
     /* use default stdio-based output */
-    png_init_io (png_ptr, fp);
+#ifdef MINGW /* MINGW build prints png only to disk file*/
+    png_init_io (png_ptr, tempfp);
+#else
+    png_init_io (png_ptr, fp); /* in Linux & Mac build png on stdout+file through > are ok*/
+#endif /* end MINGW */
 #endif /* not LIBPLOTTER */
 
+   
+    
   /* extract pixmap (2D array of miPixels) from miCanvas */
   pixmap = ((miCanvas *)(_plotter->b_canvas))->drawable->pixmap;
 
@@ -317,9 +360,17 @@ _pl_z_maybe_output_image (S___(Plotter *_plotter))
   text_ptr[2].compression = PNG_TEXT_COMPRESSION_NONE;
 
   png_set_text(png_ptr, info_ptr, text_ptr, 3);
-  
+
+  int is_png = 0;
+
   /* write out PNG file header */
-  png_write_info (png_ptr, info_ptr);
+  png_set_sig_bytes(png_ptr, 0);
+/*  png_write_sig(png_ptr);*/
+  
+
+   png_write_info (png_ptr, info_ptr); 
+   fflush(stdout);
+
   
   /* Write out image data, a row at a time; support multiple passes over
      image if interlacing.  We don't simply call png_write_image() because
@@ -388,13 +439,14 @@ _pl_z_maybe_output_image (S___(Plotter *_plotter))
 	      }
 	    
 	    /* write out row buffer */
-	    png_write_rows (png_ptr, &rowbuf, 1);
+ 	    png_write_rows (png_ptr, &rowbuf, 1);
 	  }
       }
 
     free (rowbuf);
   }
 
+//   png_write_image(png_ptr, (png_bytepp)pixmap);
   /* write out PNG file trailer (could add more comments here) */
   png_write_end (png_ptr, (png_info *)NULL);
 
