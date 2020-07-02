@@ -40,12 +40,17 @@
 #include "extern.h"
 #include "xmi.h"
 
-#pragma comment(lib, "zlib_s.lib") // must be before libpng!
 #define PNG_PTR 1
 
 #define PNG_DEBUG 3
+#pragma comment(lib, "zlib_s.lib") // must be before libpng!
 #include <png.h>
 
+#ifndef png_jmpbuf
+#  define png_jmpbuf(png_ptr) ((png_ptr)->jmpbuf)
+#endif
+
+#include <zlib.h>
 #pragma comment(lib, "libpng_s.lib") // must be after zlib!
 
 /* song and dance to define time_t, and declare both time() and gmtime() */
@@ -71,6 +76,14 @@ extern pthread_mutex_t _message_mutex;
 #endif
 #endif
 
+static void zwrite_error_fn(png_structp png_ptr, png_const_charp error_msg) {
+    fprintf(stderr, "%s\n", error_msg );
+#if (PNG_LIBPNG_VER < 10500)
+    longjmp(png_jmpbuf(png_ptr),1);
+#else
+    png_longjmp (png_ptr, 1);
+#endif
+}
 
 
 static const char _short_months[12][4] = 
@@ -173,15 +186,15 @@ _pl_z_maybe_output_image (S___(Plotter *_plotter))
 #ifdef PNG_PTR
     
   /* cleanup after libpng errors (error handler does a longjmp) */
-//   if (setjmp (png_ptr->jmpbuf))
-//     {
+   if (setjmp (png_jmpbuf(png_ptr)))
+     {
 #endif /* not PNG_PTR */
       fprintf (stderr, "libplot: libpng %s error:  PNG_PTR not defined \n", PNG_LIBPNG_VER_STRING);
       png_destroy_write_struct (&png_ptr, (png_info **)NULL);
       return -1;
 #ifdef PNG_PTR
       fprintf (stderr, "libplot: libpng %s error:  PNG_PTR defined \n", PNG_LIBPNG_VER_STRING);
-//    }
+    }
 #endif /* not PNG_PTR */
   
 #ifdef LIBPLOTTER
@@ -458,7 +471,7 @@ _our_error_fn_stdio (png_struct *png_ptr, const char *data)
 #endif
     }
 #ifdef PNG_PTR
-  //longjmp (png_ptr->jmpbuf, 1);
+  longjmp (png_jmpbuf(png_ptr), 1);
   fprintf (errfp, "libplot: libpng %s error: doing longjmp %s\n", PNG_LIBPNG_VER_STRING, data);
 #else
   fprintf (errfp, "libplot: libpng %s warning (define LONGJUMP): %s\n", PNG_LIBPNG_VER_STRING, data);
@@ -534,7 +547,7 @@ _our_error_fn_stream (png_struct *png_ptr, const char *data)
 #endif
     }
 #ifdef PNG_PTR
-//  longjmp (png_ptr->jmpbuf, 1);
+  longjmp (png_jmpbuf(png_ptr), 1);
   (*errstream) << "libplot: libpng warning: define PNG_PTR" << data << 'n';
 #endif
 }
