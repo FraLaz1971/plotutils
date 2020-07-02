@@ -127,6 +127,7 @@
 #define PL_DEFAULT_STICK_TYPEFACE_INDEX 3
 #define PL_DEFAULT_STICK_FONT_INDEX 1
 
+
 /* HERSHEY FONTS */
 
 /* our information about each of the 22 Hershey vector fonts in g_fontdb.c,

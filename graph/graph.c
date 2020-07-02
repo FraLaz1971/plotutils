@@ -32,7 +32,7 @@
 #define	ARG_REQUIRED	1
 #define	ARG_OPTIONAL	2
 
-const char *optstring = "-BCHOQVstE:F:f:g:h:k:K:I:l:L:m:N:q:R:r:T:u:w:W:X:Y:a::x::y::S::"; /* initial hyphen requests no reordering */
+const char *optstring = "-BCHOQVstE:F:f:g:h:k:K:I:l:L:m:N:q:R:r:T:o:u:w:W:X:Y:a::x::y::S::"; /* initial hyphen requests no reordering */
 
 struct option long_options[] =
 {
@@ -40,6 +40,7 @@ struct option long_options[] =
   { "output-format",	ARG_REQUIRED,	NULL, 'T'},
   { "display-type",	ARG_REQUIRED,	NULL, 'T' << 8 }, /* hidden */
   /* Other frequently used options */
+  {"output-file",	ARG_REQUIRED,	NULL, 'o'},
   {"auto-abscissa",	ARG_OPTIONAL,	NULL, 'a'}, /* 0 or 1 or 2 */
   {"clip-mode",		ARG_REQUIRED,	NULL, 'K'},
   {"fill-fraction",	ARG_REQUIRED,	NULL, 'q'},
@@ -100,8 +101,8 @@ struct option long_options[] =
 const int hidden_options[] = { (int)('T' << 8), 0 };
 
 const char *progname = "graph";	/* name of this program */
-const char *written = "Written by Robert S. Maier.";
-const char *copyright = "Copyright (C) 2009 Free Software Foundation, Inc.";
+const char *written = "Written by Robert S. Maier updated by Francesco Lazzarotto.";
+const char *copyright = "Copyright (C) 2020 Free Software Foundation, Inc.";
 
 const char *usage_appendage = " [FILE]...\n\
 With no FILE, or when FILE is -, read standard input.\n";
@@ -163,7 +164,8 @@ main (int argc, char *argv[])
   Multigrapher *multigrapher = NULL;
   
   /* command-line parameters (constant over multigrapher operation) */
-  const char *output_format = "meta";/* libplot output format */
+  const char *output_format = "ps";/* libplot output format */
+  const char *output_filename = "out.img";/* libplot output format */
   const char *bg_color = NULL;	/* color of background, if non-NULL */
   const char *bitmap_size = NULL;
   const char *emulate_color = NULL;
@@ -598,6 +600,10 @@ main (int argc, char *argv[])
 	case 'T' << 8:
 	  output_format = xstrdup (optarg);
 	  break;
+	case 'o':		/* Output file name, ARG REQUIRED      */
+	case 'o' << 8:
+	  output_filename = xstrdup (optarg);
+	  break;
 	case 'F':		/* Font name, ARG REQUIRED      */
 	  font_name = xstrdup (optarg);
 	  break;
@@ -1012,6 +1018,9 @@ main (int argc, char *argv[])
 		  if ((title_font_name == NULL) && (font_name != NULL))
 		    title_font_name = font_name;
 	      
+          /* set output filename to use in MINGW build */
+		  set_graph_outfile (multigrapher, output_filename);
+          
 		  /* initialize, using (in part) finalized arguments */
 		  set_graph_parameters (multigrapher,
 					frame_line_width,

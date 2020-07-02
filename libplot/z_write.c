@@ -68,6 +68,8 @@
 #endif /* not HAVE_SYS_TIME_H */
 #endif /* not TIME_WITH_SYS_TIME */
 
+#include <string.h>
+
 /* Mutex for locking the warning/error message subsystem.  Defined in
    g_error.c */
 #ifdef PTHREAD_SUPPORT
@@ -119,9 +121,9 @@ _pl_z_maybe_output_image (S___(Plotter *_plotter))
   struct tm *tmsp;
 #ifdef MINGW
   FILE *tempfp ;
-#else
-  FILE *fp = _plotter->data->outfp; 
+  char * tfile_name = _plotter->data->output_filename;
 #endif
+  FILE *fp = _plotter->data->outfp; 
   FILE *errorfp = _plotter->data->errfp;
   void *error_ptr;
   png_error_ptr error_fn_ptr, warn_fn_ptr;
@@ -188,8 +190,18 @@ _pl_z_maybe_output_image (S___(Plotter *_plotter))
 
   /* create png_struct, install error/warning handlers */
 #ifdef MINGW /* handle buggy MINGW build and prints only on disk file*/
-  char* tfile_name = "tempout.png";
-  tempfp = fopen(tfile_name, "wb");
+ tfile_name = "out.png";
+// //strcpy(tfile_name, _plotter->data->output_filename);
+tempfp = fopen(tfile_name, "wb");
+if (tempfp == (FILE *)NULL){
+        return -1;
+        zwrite_error_fn(png_ptr, "error in opening png output file\n");
+  } else
+  {
+      fprintf(stderr, "z_write.c png output file created pointer = %p \n",  tempfp);      
+}
+
+
 #endif
 /* stdout is always open */
 

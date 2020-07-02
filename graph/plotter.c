@@ -263,6 +263,7 @@ struct MultigrapherStruct
   /* multigrapher parameters (not updated over a multigrapher's lifetime) */
   plPlotter *plotter;		/* GNU libplot Plotter handle */
   const char *output_format;	/* type of libplot device driver [unused] */
+  const char *outfile_name;	/* output file name to handle MINGW buggy libpng */
   const char *bg_color;		/* color of background, if non-NULL */
   bool save_screen;		/* erase display when opening plotter? */
   /* graph parameters (constant over any single graph) */
@@ -286,7 +287,7 @@ struct MultigrapherStruct
   double oldpoint_x, oldpoint_y; /* last-plotted point */
   int symbol;			/* symbol being plotted at each point */
   int linemode;			/* linemode used for polyline */
-};
+}; /*end of the MultigrapherStruct struct*/
   
 /* forward references */
 static int clip_line (Multigrapher *multigrapher, double *x0_p, double *y0_p, double *x1_p, double *y1_p);
@@ -741,7 +742,11 @@ new_multigrapher (const char *output_format, const char *bg_color, const char *b
   pl_setplparam (plotter_params, "ROTATION", (void *)rotation_angle);
 
   /* create Plotter and open it */
+#ifdef MINGW
   plotter = pl_newpl_r (output_format, NULL, stdout, stderr, plotter_params);
+#else
+  plotter = pl_newpl_r (output_format, NULL, stdout, stderr, plotter_params);
+#endif
   if (plotter == (plPlotter *)NULL)
     return (Multigrapher *)NULL;
   pl_deleteplparams (plotter_params);
@@ -787,7 +792,16 @@ end_graph (Multigrapher *multigrapher)
   pl_restorestate_r (multigrapher->plotter);
 }
 
-
+void 
+set_graph_outfile (Multigrapher *multigrapher, const char *outfile)
+{
+  if (outfile != NULL){
+    multigrapher->outfile_name = xstrdup (outfile);
+  } else {
+    multigrapher->outfile_name = xstrdup ("out.img");
+  }
+}
+ 
 /* ARGS:
      Multigrapher *multigrapher
      double frame_line_width 	= fractional width of lines in the frame

@@ -54,8 +54,8 @@
    `pl_libplot_ver'.  The PL_LIBPLOT_VER macro is not compiled into it.
    Both are available to applications that include this header file. */
 
-#define PL_LIBPLOT_VER_STRING "4.4"
-#define PL_LIBPLOT_VER         404
+#define PL_LIBPLOT_VER_STRING "4.5"
+#define PL_LIBPLOT_VER         405
 
 extern const char pl_libplot_ver[8];   /* need room for 99.99aa */
 
@@ -682,9 +682,13 @@ typedef struct
   /* tag field */
   plPlotterTag type;		/* Plotter type: one of PL_* defined above */
 #endif /* NOT_LIBPLOTTER */
-
   /* low-level I/O issues */
   plPlotterOutputModel output_model;/* one of PL_OUTPUT_* (see above) */
+
+#ifdef MINGW
+ char *output_filename;
+#endif
+
   FILE *infp;			/* stdio-style input stream if any */
   FILE *outfp;			/* stdio-style output stream if any */
   FILE *errfp;			/* stdio-style error stream if any */

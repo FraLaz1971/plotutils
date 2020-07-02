@@ -41,7 +41,7 @@
 # define ___BEGIN_DECLS		/* empty */
 # define ___END_DECLS		/* empty */
 #endif
-     
+
 ___BEGIN_DECLS
 
 extern char * xstrdup (const char *s);
