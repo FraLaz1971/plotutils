@@ -40,7 +40,13 @@
 #include "extern.h"
 #include "xmi.h"
 
+#pragma comment(lib, "zlib_s.lib") // must be before libpng!
+#define PNG_PTR 1
+
+#define PNG_DEBUG 3
 #include <png.h>
+
+#pragma comment(lib, "libpng_s.lib") // must be after zlib!
 
 /* song and dance to define time_t, and declare both time() and gmtime() */
 #ifdef HAVE_SYS_TYPES_H
@@ -64,6 +70,8 @@
 extern pthread_mutex_t _message_mutex;
 #endif
 #endif
+
+
 
 static const char _short_months[12][4] = 
 { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
@@ -162,13 +170,19 @@ _pl_z_maybe_output_image (S___(Plotter *_plotter))
       png_destroy_write_struct (&png_ptr, (png_info **)NULL);
       return -1;
     }
-
+#ifdef PNG_PTR
+    
   /* cleanup after libpng errors (error handler does a longjmp) */
-/*if (setjmp (png_ptr->jmpbuf)) */
-if (setjmp (png_jmpbuf(png_ptr)))    {
+//   if (setjmp (png_ptr->jmpbuf))
+//     {
+#endif /* not PNG_PTR */
+      fprintf (stderr, "libplot: libpng %s error:  PNG_PTR not defined \n", PNG_LIBPNG_VER_STRING);
       png_destroy_write_struct (&png_ptr, (png_info **)NULL);
       return -1;
-    }
+#ifdef PNG_PTR
+      fprintf (stderr, "libplot: libpng %s error:  PNG_PTR defined \n", PNG_LIBPNG_VER_STRING);
+//    }
+#endif /* not PNG_PTR */
   
 #ifdef LIBPLOTTER
   if (stream)
@@ -435,7 +449,7 @@ _our_error_fn_stdio (png_struct *png_ptr, const char *data)
       pthread_mutex_lock (&_message_mutex);
 #endif
 #endif
-      fprintf (errfp, "libplot: libpng error: %s\n", data);
+      fprintf (errfp, "libplot: libpng %s error: %s\n", PNG_LIBPNG_VER_STRING, data);
 #ifdef PTHREAD_SUPPORT
 #ifdef HAVE_PTHREAD_H
       /* unlock the message subsystem */
@@ -443,9 +457,13 @@ _our_error_fn_stdio (png_struct *png_ptr, const char *data)
 #endif
 #endif
     }
-
-/*longjmp (png_ptr->jmpbuf, 1); Kemin changed this*/
-longjmp(png_jmpbuf(png_ptr), 1);
+#ifdef PNG_PTR
+  //longjmp (png_ptr->jmpbuf, 1);
+  fprintf (errfp, "libplot: libpng %s error: doing longjmp %s\n", PNG_LIBPNG_VER_STRING, data);
+#else
+  fprintf (errfp, "libplot: libpng %s warning (define LONGJUMP): %s\n", PNG_LIBPNG_VER_STRING, data);
+  fprintf (errfp, "libplot: libpng %s error: %s\n", PNG_LIBPNG_VER_STRING, data);
+#endif
 }
 
 static void 
@@ -507,7 +525,7 @@ _our_error_fn_stream (png_struct *png_ptr, const char *data)
       pthread_mutex_lock (&_message_mutex);
 #endif
 #endif
-      (*errstream) << "libplot: libpng error: " << data << 'n';
+      (*errstream) << "libplot:_our_error_fn_stream libpng: error: " << data << 'n';
 #ifdef PTHREAD_SUPPORT
 #ifdef HAVE_PTHREAD_H
       /* unlock the message subsystem */
@@ -515,8 +533,10 @@ _our_error_fn_stream (png_struct *png_ptr, const char *data)
 #endif
 #endif
     }
-
-  longjmp (png_ptr->jmpbuf, 1);
+#ifdef PNG_PTR
+//  longjmp (png_ptr->jmpbuf, 1);
+  (*errstream) << "libplot: libpng warning: define PNG_PTR" << data << 'n';
+#endif
 }
 
 static void 
