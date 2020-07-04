@@ -1,3 +1,13 @@
+***********************************************
+** local update for a mingw build on MS windows
+***********************************************
+to configure:
+. local-cross-configure-win.sh
+to compile:
+make
+to install:
+sudo make install
+
 Installation Instructions
 *************************
 
