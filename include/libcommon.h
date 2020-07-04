@@ -42,6 +42,8 @@
 # define ___END_DECLS		/* empty */
 #endif
 
+// #define DEFAULT_OUTPUT_FILENAME "out.img"
+
 ___BEGIN_DECLS
 
 extern char * xstrdup (const char *s);

@@ -90,8 +90,6 @@ static void zwrite_error_fn(png_structp png_ptr, png_const_charp error_msg) {
 #define PNG_PTR 1
 #define PNGSIGSIZE 8
 
-  
-
 
 static const char _short_months[12][4] = 
 { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
@@ -189,20 +187,24 @@ _pl_z_maybe_output_image (S___(Plotter *_plotter))
 #endif /* not LIBPLOTTER */
 
   /* create png_struct, install error/warning handlers */
+#undef MINGW
 #ifdef MINGW /* handle buggy MINGW build and prints only on disk file*/
  tfile_name = "out.png";
 // //strcpy(tfile_name, _plotter->data->output_filename);
+tempfp = fp;
 tempfp = fopen(tfile_name, "wb");
 if (tempfp == (FILE *)NULL){
         return -1;
         zwrite_error_fn(png_ptr, "error in opening png output file\n");
-  } else
+  }
+#ifdef DEBUG
+  else
   {
       fprintf(stderr, "z_write.c png output file created pointer = %p \n",  tempfp);      
-}
+  }
+#endif /*ends DEBUG */
 
-
-#endif
+#endif /*ens MINGW */
 /* stdout is always open */
 
   png_ptr = png_create_write_struct (PNG_LIBPNG_VER_STRING,
@@ -216,7 +218,9 @@ if (tempfp == (FILE *)NULL){
   } else
   {
       int pv = (int)png_ptr;
+#ifdef DEBUG
       fprintf(stderr, "libpng version %s png struct pointer created = %p \n", PNG_LIBPNG_VER_STRING, png_ptr);      
+#endif
   }
   /* allocate/initialize image information data */
   info_ptr = png_create_info_struct (png_ptr);
@@ -225,10 +229,12 @@ if (tempfp == (FILE *)NULL){
       png_destroy_write_struct (&png_ptr, (png_info **)NULL);
       zwrite_error_fn(png_ptr, "error in creating png info struct\n");
       return -1;
-    } else{
+    } 
+#ifdef DEBUG
+    else{
       fprintf(stderr, "libpng version %s png info struct pointer created = %p\n", PNG_LIBPNG_VER_STRING, info_ptr);              
     }
-    
+#endif
 #ifdef PNG_PTR
   /* cleanup after libpng errors (error handler does a longjmp) */
    if (setjmp (png_jmpbuf(png_ptr)))
@@ -253,6 +259,7 @@ if (tempfp == (FILE *)NULL){
     }
   else
     /* must have fp!=NULL, so use default stdio-based output */
+
 #ifdef MINGW /* MINGW build prints png only to disk file*/
     png_init_io (png_ptr, tempfp);
 #else

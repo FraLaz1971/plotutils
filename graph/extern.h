@@ -19,7 +19,11 @@
 
 extern const char *progname;	/* program name */
 
+static  const char *output_filename = "default.img";/* plot output file_input */
 
+#ifdef DEBUG
+static int ncalls = 0;
+#endif
 
 /* Definition of the Point structure.  The point-reader (in reader.c)
    returns a list of these from a specified input stream, and the
@@ -82,6 +86,8 @@ typedef struct MultigrapherStruct Multigrapher;
 
 extern Multigrapher * new_multigrapher (const char *output_format, const char *bg_color, const char *bitmap_size, const char *emulate_color, const char *max_line_length, const char *meta_portable, const char *page_size, const char *rotation_angle, bool save_screen);
 
+extern Multigrapher * new_multigrapher_on_file (const char *output_filename, const char *output_format, const char *bg_color, const char *bitmap_size, const char *emulate_color, const char *max_line_length, const char *meta_portable, const char *page_size, const char *rotation_angle, bool save_screen);
+
 extern int delete_multigrapher (Multigrapher *multigrapher);
 
 extern void begin_graph (Multigrapher *multigrapher, double scale, double trans_x, double trans_y);
@@ -91,7 +97,7 @@ extern void end_graph (Multigrapher *multigrapher);
 extern void set_graph_parameters (Multigrapher *multigrapher, double frame_line_width, const char *frame_color, const char *title, const char *title_font_name, double title_font_size, double tick_size, grid_type grid_spec, double x_min, double x_max, double x_spacing, double y_min, double y_max, double y_spacing, bool spec_x_spacing, bool spec_y_spacing, double width, double height, double up, double right, const char *x_font_name, double x_font_size, const char *x_label, const char *y_font_name, double y_font_size, const char *y_label, bool no_rotate_y_label, int log_axis, int round_to_next_tick, int switch_axis_end, int omit_labels, int clip_mode, double blankout_fraction, bool transpose_axes);
 
 
-extern void set_graph_outfile (Multigrapher *multigrapher, const char *outfile);
+extern void set_graph_outfile (const char *outfile);
 
 extern void draw_frame_of_graph (Multigrapher *multigrapher, bool draw_canvas);
 

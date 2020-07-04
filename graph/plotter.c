@@ -115,6 +115,10 @@
 #include "plot.h"
 #include "extern.h"
 
+const char *tpfn = NULL;
+FILE *tpf;
+#define DEFAULT_FILE_NAME  "out.img"
+
 /* we use floating point libplot coordinates in the range [0,PLOT_SIZE] */
 #define PLOT_SIZE 4096.0
 
@@ -730,9 +734,17 @@ new_multigrapher (const char *output_format, const char *bg_color, const char *b
   Multigrapher *multigrapher;
    	
   multigrapher = (Multigrapher *)xmalloc (sizeof (Multigrapher));
-
   /* set Plotter parameters */
   plotter_params = pl_newplparams ();
+#ifdef MINGW
+//  tpf = pl_outfile_r (multigrapher->plotter, tpf);
+#endif
+#ifdef DEBUG
+  fprintf(stderr, "plotter.c.new_multigrapher: just in, call n. %d\n", ++ncalls);
+  fprintf(stderr, "plotter.c.new_multigrapher: just in, tpfn is %s\n", tpfn);
+  fprintf(stderr, "plotter.c.new_multigrapher: multigrapher->plotter = %p\n", multigrapher->plotter);
+  fprintf(stderr, "plotter.c.new_multigrapher: tpf = %p\n", tpf);
+#endif
   pl_setplparam (plotter_params, "BG_COLOR", (void *)bg_color);
   pl_setplparam (plotter_params, "BITMAPSIZE", (void *)bitmap_size);
   pl_setplparam (plotter_params, "EMULATE_COLOR", (void *)emulate_color);
@@ -743,7 +755,17 @@ new_multigrapher (const char *output_format, const char *bg_color, const char *b
 
   /* create Plotter and open it */
 #ifdef MINGW
-  plotter = pl_newpl_r (output_format, NULL, stdout, stderr, plotter_params);
+  const char * t1 = tpfn;
+  multigrapher->outfile_name = t1;
+#ifdef DEBUG
+  fprintf(stderr, "plotter.c.new_multigrapher: output_filename = %s\n", output_filename);
+  fprintf(stderr, "plotter.c.new_multigrapher: t1 = %s\n", t1);
+  fprintf(stderr, "plotter.c.new_multigrapher: multigrapher->outfile_name = %s\n", multigrapher->outfile_name);
+#endif
+  tpf = fopen(multigrapher->outfile_name, "wb");
+  //tpf = fopen(t1, "wb");
+  plotter = pl_newpl_r (output_format, NULL, tpf, stderr, plotter_params);
+//  plotter = pl_newpl_r (output_format, NULL, stdout, stderr, plotter_params);
 #else
   plotter = pl_newpl_r (output_format, NULL, stdout, stderr, plotter_params);
 #endif
@@ -763,6 +785,68 @@ new_multigrapher (const char *output_format, const char *bg_color, const char *b
   return multigrapher;
 }
 
+Multigrapher *
+new_multigrapher_on_file (const char * output_filename, const char *output_format, const char *bg_color, const char *bitmap_size, const char *emulate_color, const char *max_line_length, const char *meta_portable, const char *page_size, const char *rotation_angle, bool save_screen)
+{
+  plPlotterParams *plotter_params;
+  plPlotter *plotter;
+  Multigrapher *multigrapher;
+   	
+  multigrapher = (Multigrapher *)xmalloc (sizeof (Multigrapher));
+  multigrapher->outfile_name = output_filename;
+#ifdef DEBUG
+    fprintf("plotter.c.new_multigrapher_on_file: multigrapher->output_filename = %s\n", multigrapher->outfile_name);
+#endif
+
+  /* set Plotter parameters */
+  plotter_params = pl_newplparams ();
+#ifdef MINGW
+//  tpf = pl_outfile_r (multigrapher->plotter, tpf);
+#endif
+#ifdef DEBUG
+  fprintf(stderr, "plotter.c.new_multigrapher_on_file multigrapher->plotter = %p\n", multigrapher->plotter);
+  fprintf(stderr, "plotter.c.new_multigrapher_on_file tpf = %p\n", tpf);
+#endif
+  pl_setplparam (plotter_params, "BG_COLOR", (void *)bg_color);
+  pl_setplparam (plotter_params, "BITMAPSIZE", (void *)bitmap_size);
+  pl_setplparam (plotter_params, "EMULATE_COLOR", (void *)emulate_color);
+  pl_setplparam (plotter_params, "MAX_LINE_LENGTH", (void *)max_line_length);
+  pl_setplparam (plotter_params, "META_PORTABLE", (void *)meta_portable);
+  pl_setplparam (plotter_params, "PAGESIZE", (void *)page_size);
+  pl_setplparam (plotter_params, "ROTATION", (void *)rotation_angle);
+
+  /* create Plotter and open it */
+#ifdef MINGW
+/*  const char * t1 = DEFAULT_FILE_NAME;
+   fprintf(stderr, "plotter.c.new_multigrapher_on_file t1 = %s\n", t1); 
+   */
+  multigrapher->outfile_name = output_filename;
+#ifdef DEBUG
+  fprintf(stderr, "plotter.c.new_multigrapher_on_file multigrapher->outfile_name = %s\n", multigrapher->outfile_name);
+#endif
+  tpf = fopen(multigrapher->outfile_name, "wb");
+  //tpf = fopen(t1, "wb");
+  plotter = pl_newpl_r (output_format, NULL, tpf, stderr, plotter_params);
+//  plotter = pl_newpl_r (output_format, NULL, stdout, stderr, plotter_params);
+#else
+  plotter = pl_newpl_r (output_format, NULL, stdout, stderr, plotter_params);
+#endif
+  if (plotter == (plPlotter *)NULL)
+    return (Multigrapher *)NULL;
+  pl_deleteplparams (plotter_params);
+  multigrapher->plotter = plotter;
+  if (pl_openpl_r (plotter) < 0)
+    return (Multigrapher *)NULL;
+  multigrapher->bg_color = bg_color;
+
+  /* if called for, erase it; set up the user->device coor map */
+  if (!save_screen || bg_color)
+    pl_erase_r (plotter);
+  pl_fspace_r (plotter, 0.0, 0.0, (double)PLOT_SIZE, (double)PLOT_SIZE);
+
+  return multigrapher;
+
+}
 int
 delete_multigrapher (Multigrapher *multigrapher)
 {
@@ -793,12 +877,12 @@ end_graph (Multigrapher *multigrapher)
 }
 
 void 
-set_graph_outfile (Multigrapher *multigrapher, const char *outfile)
+set_graph_outfile (const char *outfile)
 {
   if (outfile != NULL){
-    multigrapher->outfile_name = xstrdup (outfile);
+    tpfn = xstrdup (outfile);
   } else {
-    multigrapher->outfile_name = xstrdup ("out.img");
+    tpfn = xstrdup ("plotter.img");
   }
 }
  

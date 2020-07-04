@@ -32,6 +32,9 @@
 #define	ARG_REQUIRED	1
 #define	ARG_OPTIONAL	2
 
+
+// #undef MINGW
+
 const char *optstring = "-BCHOQVstE:F:f:g:h:k:K:I:l:L:m:N:q:R:r:T:o:u:w:W:X:Y:a::x::y::S::"; /* initial hyphen requests no reordering */
 
 struct option long_options[] =
@@ -110,13 +113,17 @@ With no FILE, or when FILE is -, read standard input.\n";
 /* forward references */
 static void close_file (char *filename, FILE *stream);
 static void open_file_for_reading (char *filename, FILE **input);
+static void open_file_for_saving (char *outfilename, FILE **output);
+static void close_outfile (char *outfilename, FILE *stream);
 static bool parse_pen_string (const char *pen_s);
 
 int
 main (int argc, char *argv[])
 {
   /* Variables related to getopt parsing */
-
+#ifdef DEBUG
+  fprintf (stderr,"%s: info: output_filename is %s\n", progname, output_filename);
+#endif
   int option;
   int opt_index;
   int errcnt = 0;		/* errors encountered in getopt parsing */
@@ -165,7 +172,6 @@ main (int argc, char *argv[])
   
   /* command-line parameters (constant over multigrapher operation) */
   const char *output_format = "ps";/* libplot output format */
-  const char *output_filename = "out.img";/* libplot output format */
   const char *bg_color = NULL;	/* color of background, if non-NULL */
   const char *bitmap_size = NULL;
   const char *emulate_color = NULL;
@@ -294,7 +300,7 @@ main (int argc, char *argv[])
 	      if (strcmp (optarg, "-") == 0)
 		data_file = stdin; /* interpret "-" as stdin */
 	      else
-		open_file_for_reading (optarg, &data_file);
+		open_file_for_reading (optarg, &data_file);      
 	    }
 	}
       else
@@ -601,8 +607,14 @@ main (int argc, char *argv[])
 	  output_format = xstrdup (optarg);
 	  break;
 	case 'o':		/* Output file name, ARG REQUIRED      */
+    #ifdef DEBUG
+    fprintf (stderr,"%s: info: parsing option 'o' , argument is %s\n", progname, optarg);
+    #endif
 	case 'o' << 8:
 	  output_filename = xstrdup (optarg);
+    #ifdef DEBUG
+    fprintf (stderr,"%s: info: output_filename is %s\n", progname, output_filename);
+    #endif
 	  break;
 	case 'F':		/* Font name, ARG REQUIRED      */
 	  font_name = xstrdup (optarg);
@@ -973,6 +985,10 @@ main (int argc, char *argv[])
 	    }
 	  optind++;		/* tell getopt we recognized trans_x */
 
+#ifdef DEBUG
+  fprintf (stderr,"%s: info: end of options parsing, output_filename is %s\n", progname, output_filename);
+#endif
+
 	  if (!first_file_of_graph)
 	    /* a graph is in progress (at least one file has been read), so
 	       it must be ended before we begin the next one */
@@ -997,7 +1013,18 @@ main (int argc, char *argv[])
 		  if (first_graph_of_multigraph)
 		    /* haven't created multigrapher yet, do so now */
 		    {
-		      if ((multigrapher = new_multigrapher (output_format, bg_color, bitmap_size, emulate_color, max_line_length, meta_portable, page_size, rotation_angle, save_screen)) == NULL)
+
+#ifdef DEBUG
+  fprintf (stderr,"%s: info: before calling new_multigrapher %s\n", progname, output_filename);
+  fprintf (stderr,"%s: info: now undefining MINGW %s\n", progname);
+#endif
+//#undef MINGW
+#ifdef MINGW           
+		      if ((multigrapher = new_multigrapher_on_file (output_filename, output_format, bg_color, bitmap_size, emulate_color, max_line_length, meta_portable, page_size, rotation_angle, save_screen)) == NULL)
+#else
+             if ((multigrapher = new_multigrapher (output_format, bg_color, bitmap_size, emulate_color, max_line_length, meta_portable, page_size, rotation_angle, save_screen)) == NULL)
+#endif
+                  
 			{
 			  fprintf (stderr, 
 				   "%s: error: the graphing device could not be opened\n", progname);
@@ -1010,7 +1037,11 @@ main (int argc, char *argv[])
 		     matrix with a matrix formed from the repositioning
 		     parameters (this will be in effect for duration of the
 		     graph) */
-		  begin_graph (multigrapher,
+#ifdef DEBUG
+  fprintf (stderr,"%s: info: before begin_graph() outfilename is %s\n", progname, output_filename);
+#endif
+
+    begin_graph (multigrapher,
 			       old_reposition_scale,
 			       old_reposition_trans_x, old_reposition_trans_y);
 		  
@@ -1018,8 +1049,6 @@ main (int argc, char *argv[])
 		  if ((title_font_name == NULL) && (font_name != NULL))
 		    title_font_name = font_name;
 	      
-          /* set output filename to use in MINGW build */
-		  set_graph_outfile (multigrapher, output_filename);
           
 		  /* initialize, using (in part) finalized arguments */
 		  set_graph_parameters (multigrapher,
@@ -1045,7 +1074,8 @@ main (int argc, char *argv[])
 					/* more args */
 					clip_mode,
 					blankout_fraction,
-					final_transpose_axes);
+					final_transpose_axes
+                    );
 	      
 		  /* draw the graph frame (grid, ticks, etc.); draw a
 		     `canvas' (a background opaque white rectangle) only if
@@ -1216,7 +1246,11 @@ main (int argc, char *argv[])
 		  if (first_graph_of_multigraph)
 		    /* need to create the multigrapher */
 		    {
+#ifdef MINGW
+		      if ((multigrapher = new_multigrapher_on_file (output_filename, output_format, bg_color, bitmap_size, emulate_color, max_line_length, meta_portable, page_size, rotation_angle, save_screen)) == NULL)
+#else
 		      if ((multigrapher = new_multigrapher (output_format, bg_color, bitmap_size, emulate_color, max_line_length, meta_portable, page_size, rotation_angle, save_screen)) == NULL)
+#endif
 			{
 			  fprintf (stderr, 
 				   "%s: error: the graphing device could not be opened\n", 
@@ -1264,7 +1298,8 @@ main (int argc, char *argv[])
 					/* more args */
 					clip_mode,
 					blankout_fraction,
-					final_transpose_axes);
+					final_transpose_axes
+                    );
 
 		  /* draw the graph frame (grid, ticks, etc.); draw a
 		     `canvas' (a background opaque white rectangle) only if
@@ -1390,6 +1425,10 @@ main (int argc, char *argv[])
 	  break;
 	}			/* end of switch() */
 
+#ifdef DEBUG
+  fprintf (stderr,"%s: info: out of switch outfn is %s\n", progname, output_filename);
+#endif
+
       if (errcnt > 0)
 	continue_parse = false;
     }				/* end of while loop */
@@ -1456,8 +1495,24 @@ main (int argc, char *argv[])
 	  if (first_graph_of_multigraph)
 	    /* still haven't created multigrapher, do so now */
 	    {
+#ifdef DEBUG
+  fprintf (stderr,"%s: info: end of options parsing, output_filename is %s\n", progname, output_filename);
+#endif
+#ifdef DEBUG
+  fprintf (stderr,"%s: info: before calling new_multigrapher (1) %s\n", progname, output_filename);
+  fprintf (stderr,"%s: info: now undefining MINGW %s\n", progname);
+#endif
+#ifdef MINGW
+set_graph_outfile(output_filename);
+#endif
+#undef MINGW
+#ifdef MINGW
+        if ((multigrapher = new_multigrapher_on_file (otf, output_format, bg_color, bitmap_size, emulate_color, max_line_length, meta_portable, page_size, rotation_angle, save_screen)) == NULL)
+#else
 	      if ((multigrapher = new_multigrapher (output_format, bg_color, bitmap_size, emulate_color, max_line_length, meta_portable, page_size, rotation_angle, save_screen)) == NULL)
-		{
+#endif
+
+          {
 		  fprintf (stderr, 
 			   "%s: error: the graphing device could not be opened\n", progname);
 		  return EXIT_FAILURE;
@@ -1468,6 +1523,7 @@ main (int argc, char *argv[])
 	     states; also concatenate the current transformation matrix
 	     with a matrix formed from the repositioning parameters (this
 	     will take effect for the duration of the graph) */
+#undef MINGW
 	  begin_graph (multigrapher,
 		       reposition_scale, 
 		       reposition_trans_x, reposition_trans_y);
@@ -1500,7 +1556,8 @@ main (int argc, char *argv[])
 				/* more args */
 				clip_mode,
 				blankout_fraction,
-				final_transpose_axes);
+				final_transpose_axes
+                );
 	  
 	  /* draw the graph frame (grid, ticks, etc.); draw a `canvas' (a
 	     background opaque white rectangle) only if this isn't the
@@ -1546,7 +1603,6 @@ static void
 open_file_for_reading (char *filename, FILE **input)
 {
   FILE *data_file;
-		
   data_file = fopen (filename, "r");
   if (data_file == NULL)
     {
@@ -1564,6 +1620,28 @@ close_file (char *filename, FILE *stream)
     fprintf (stderr, 
 	     "%s: the input file `%s' could not be closed\n", 
 	     progname, filename);
+}
+
+
+static void open_file_for_saving (char *outfilename, FILE **output)
+{
+  FILE *odata_file;
+  odata_file = fopen (outfilename, "wb");
+  if (odata_file == NULL)
+    {
+      fprintf (stderr, "%s: %s: %s\n", progname, outfilename, strerror(errno));
+      exit (EXIT_FAILURE);
+    }
+  else
+    *output = odata_file;
+}
+
+static void close_outfile (char *outfilename, FILE *stream)
+{
+  if (fclose (stream) < 0)
+    fprintf (stderr, 
+	     "%s: the output file `%s' could not be closed\n", 
+	     progname, outfilename);
 }
 
 static bool

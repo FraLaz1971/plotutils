@@ -56,6 +56,7 @@
 
 #define PL_LIBPLOT_VER_STRING "4.5"
 #define PL_LIBPLOT_VER         405
+#define DEFAULt_OUTPUT_FILENAME "out.img"
 
 extern const char pl_libplot_ver[8];   /* need room for 99.99aa */
 
