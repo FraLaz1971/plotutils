@@ -1,3 +1,18 @@
+###########################################
+## update by fralaz1971@gmail.com
+## july 2020
+##########################################
+building on MS windows 2.6 version
+gives graph executable that create
+corrupted png and gif images
+when saving files redirected files on disk
+graph -T png ... > out.png
+graph -T gif ... > out.gif
+created a workoround adding a -o switch
+to save the plot on disk file
+graph -T png -o myfile.png ...
+graph -T gif -o myfile.gif ...
+##########################################
 This is release 2.6 of the GNU plotutils (plotting utilities) package,
 including release 4.4 of GNU libplot: a thread-safe function library for
 exporting two-dimensional vector graphics files, and for displaying
