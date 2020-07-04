@@ -758,13 +758,30 @@ new_multigrapher (const char *output_format, const char *bg_color, const char *b
   const char * t1 = tpfn;
   multigrapher->outfile_name = t1;
 #ifdef DEBUG
-  fprintf(stderr, "plotter.c.new_multigrapher: output_filename = %s\n", output_filename);
+  fprintf(stderr, "plotter.c.new_multigrapher: static output_filename = %s\n", output_filename);
   fprintf(stderr, "plotter.c.new_multigrapher: t1 = %s\n", t1);
-  fprintf(stderr, "plotter.c.new_multigrapher: multigrapher->outfile_name = %s\n", multigrapher->outfile_name);
+  fprintf(stderr, "plotter.c.new_multigrapher: multigrapher->outfile_name is %s\n", multigrapher->outfile_name);
+#endif
+  if (multigrapher->outfile_name != NULL)
+  {
+#ifdef DEBUG
+  fprintf(stderr, "plotter.c.new_multigrapher: static multigrapher->outfile_name != NULL \n");
+  fprintf(stderr, "plotter.c.new_multigrapher: multigrapher->outfile_name is %s\n", multigrapher->outfile_name);
+  fprintf(stderr, "plotter.c.new_multigrapher: static output_filename = %s(2)\n", output_filename);
 #endif
   tpf = fopen(multigrapher->outfile_name, "wb");
   //tpf = fopen(t1, "wb");
-  plotter = pl_newpl_r (output_format, NULL, tpf, stderr, plotter_params);
+    plotter = pl_newpl_r (output_format, NULL, tpf, stderr, plotter_params);
+  } else
+  {
+#ifdef DEBUG
+  fprintf(stderr, "plotter.c.new_multigrapher: static multigrapher->outfile_name == NULL \n");
+  fprintf(stderr, "plotter.c.new_multigrapher: multigrapher->outfile_name is %s\n", multigrapher->outfile_name);
+  fprintf(stderr, "plotter.c.new_multigrapher: going to output on stdout, filename = %s\n", multigrapher->outfile_name);
+#endif
+
+    plotter = pl_newpl_r (output_format, NULL, stdout, stderr, plotter_params);
+}
 //  plotter = pl_newpl_r (output_format, NULL, stdout, stderr, plotter_params);
 #else
   plotter = pl_newpl_r (output_format, NULL, stdout, stderr, plotter_params);
@@ -882,7 +899,8 @@ set_graph_outfile (const char *outfile)
   if (outfile != NULL){
     tpfn = xstrdup (outfile);
   } else {
-    tpfn = xstrdup ("plotter.img");
+//    tpfn = xstrdup ("plotter.img");
+    tpfn = NULL;
   }
 }
  

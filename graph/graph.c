@@ -1503,8 +1503,19 @@ main (int argc, char *argv[])
   fprintf (stderr,"%s: info: now undefining MINGW %s\n", progname);
 #endif
 #ifdef MINGW
-set_graph_outfile(output_filename);
-#endif
+if (output_filename != "default.img"){    
+#ifdef DEBUG
+  fprintf (stderr,"%s: info: output_filename set via -o option =  %s\n", progname, output_filename);    
+#endif /*ends DEBUG */
+    set_graph_outfile(output_filename);
+} 
+#ifdef DEBUG
+else {
+  set_graph_outfile(output_filename);
+  fprintf (stderr,"%s: info: output_filename NOT set via -o option =  %s\n", progname, output_filename);    
+}
+#endif /*ends DEBUG */
+#endif /*ends MINGW */
 #undef MINGW
 #ifdef MINGW
         if ((multigrapher = new_multigrapher_on_file (otf, output_format, bg_color, bitmap_size, emulate_color, max_line_length, meta_portable, page_size, rotation_angle, save_screen)) == NULL)

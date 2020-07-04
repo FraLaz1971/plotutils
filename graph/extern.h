@@ -19,7 +19,8 @@
 
 extern const char *progname;	/* program name */
 
-static  const char *output_filename = "default.img";/* plot output file_input */
+static  const char *output_filename = NULL;/* plot output file_input */
+//static  const char *output_filename = NULL;/* plot output file_input */
 
 #ifdef DEBUG
 static int ncalls = 0;
