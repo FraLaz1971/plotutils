@@ -217,7 +217,7 @@ if (tempfp == (FILE *)NULL){
         zwrite_error_fn(png_ptr, "error in creating png struct\n");
   } else
   {
-      int pv = (int)png_ptr;
+      unsigned long int pv = (unsigned long int)png_ptr;
 #ifdef DEBUG
       fprintf(stderr, "libpng version %s png struct pointer created = %p \n", PNG_LIBPNG_VER_STRING, png_ptr);      
 #endif
