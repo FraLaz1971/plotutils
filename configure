@@ -8840,6 +8840,10 @@ _lt_linker_boilerplate=`cat conftest.err`
 $RM -r conftest*
 
 
+## CAVEAT EMPTOR:
+## There is no encapsulation within the following macros, do not change
+## the running order or otherwise move them around unless you know exactly
+## what you are doing...
 if test -n "$compiler"; then
 
 lt_prog_compiler_no_builtin_flag=
@@ -18200,7 +18204,7 @@ if test "x$ac_cv_lib_png_png_set_tRNS" = xyes; then :
   $as_echo "#define HAVE_LIBPNG 1" >>confdefs.h
 
 else
-  png_support="no"
+  png_support="yes"
 fi
 
 
@@ -18209,8 +18213,11 @@ if test "${with_libpng+set}" = set; then :
   withval=$with_libpng; if test "x${with_libpng}" = "xno"; then png_support="no"; fi
 fi
 
-if test "x${png_support}" = "xyes"; then $as_echo "#define INCLUDE_PNG_SUPPORT 1" >>confdefs.h
- fi
+if test "x${png_support}" = "xyes";
+then
+$as_echo "#define INCLUDE_PNG_SUPPORT 1" >>confdefs.h
+
+fi
  if test "x${png_support}" = "xno"; then
   NO_PNG_TRUE=
   NO_PNG_FALSE='#'

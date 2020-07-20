@@ -305,9 +305,12 @@ AM_CONDITIONAL(NO_X, test "x$no_x" = "xyes")
 # supplies the `-lz' argument to the linker.
 
 AC_CHECK_HEADERS(png.h, png_support="yes", png_support="no")
-AC_CHECK_LIB(png, png_set_tRNS, [AC_DEFINE(HAVE_LIBPNG)], png_support="no", -lz -lm)
+AC_CHECK_LIB(png, png_set_tRNS, [AC_DEFINE(HAVE_LIBPNG)], png_support="yes", -lz -lm)
 AC_ARG_WITH(libpng, [  --without-libpng        omit PNG support even if libpng and zlib are present], if test "x${with_libpng}" = "xno"; then png_support="no"; fi)
-if test "x${png_support}" = "xyes"; then AC_DEFINE(INCLUDE_PNG_SUPPORT) fi
+if test "x${png_support}" = "xyes"; 
+then 
+AC_DEFINE(INCLUDE_PNG_SUPPORT) 
+fi
 AM_CONDITIONAL(NO_PNG, test "x${png_support}" = "xno")
 
 # Font options.  The ps_fonts_in_pcl variable is used by test/plot2hpgl.test.
