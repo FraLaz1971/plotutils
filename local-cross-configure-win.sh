@@ -1,3 +1,6 @@
+## warning
+## you've to updated LDFLAGS with the real path to libpng
+##
 ./configure \
 --host=i686-w64-mingw32 \
 --target=i686-w64-mingw32 \
