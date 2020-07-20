@@ -1,6 +1,9 @@
 ## Makefile.am for plotutils.
 ## Process this file with automake to produce Makefile.in in all directories.
 
+ACLOCAL_AMFLAGS = -I m4
+
+
 # plot, tek2plot, plotfont, graph, and hersheydemo are linked with libplot.
 # spline, double, and ode are not, however.  All use the routines in lib.
 #
@@ -12,6 +15,8 @@
 # Since the libxmi 2D rasterization library is distributed as a separate
 # package, by default we don't build and install it as a standalone
 # library.  (It's always compiled into libplot and libplotter, though.)
+
+
 
 if NO_LIBPLOTTER
 ADD_LIBPLOTTER =

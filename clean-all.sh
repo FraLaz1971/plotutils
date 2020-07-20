@@ -11,3 +11,5 @@ make clean
 make distclean
 rm -rf autom4te.cache
 rm config.h
+autoreconf -vi
+
