@@ -7,6 +7,10 @@ to compile:
 make
 to install:
 sudo make install
+***********************************************
+** to (re)configure for linux
+. local-linux-configure.sh
+***********************************************
 
 Installation Instructions
 *************************
