@@ -1,4 +1,4 @@
-This is libxmi.info, produced by makeinfo version 4.7 from libxmi.texi.
+This is libxmi.info, produced by makeinfo version 4.13 from libxmi.texi.
 
 INFO-DIR-SECTION Libraries
 START-INFO-DIR-ENTRY
@@ -702,13 +702,13 @@ modifications, the code was released as the standalone `libxmi' library.
 
 
 Tag Table:
-Node: Top1013
-Node: libxmi Overview1953
-Node: libxmi Example5823
-Node: libxmi API13111
-Node: Opaque Data Structures13462
-Node: First Stage19709
-Node: Second Stage25313
-Node: Acknowledgements30847
+Node: Top1014
+Node: libxmi Overview1954
+Node: libxmi Example5824
+Node: libxmi API13112
+Node: Opaque Data Structures13463
+Node: First Stage19710
+Node: Second Stage25314
+Node: Acknowledgements30848
 
 End Tag Table
