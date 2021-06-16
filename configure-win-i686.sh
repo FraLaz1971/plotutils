@@ -1,7 +1,7 @@
 ## warning
 ## you've to updated LDFLAGS with the real path to libpng
 ##
-LIBPNGROOT="../libpng"
+LIBPNGROOT="/home/serena/projects/2020-11-27/plotutils27"
 ./configure \
 --host=i686-w64-mingw32 \
 --target=i686-w64-mingw32 \

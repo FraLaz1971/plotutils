@@ -1,12 +1,17 @@
 ###########################################
 ## update by fralaz1971@gmail.com
-## july 2020
+## june 2021
 ##########################################
 # to compile on linux for linux
 . local-linux-configure.sh 
 ##########################################
-to crosscompile for win with mingw32_w64
+to crosscompile for win with w64-mingw32-gcc
+from within the msys terminal (not mingw terminal)
 . local-cross-configure-win.sh
+and then from any terminal
+mingw32-make
+##########################################
+
 ##########################################
 building on MS windows 2.6 version
 gives graph executable that create

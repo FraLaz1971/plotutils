@@ -22,7 +22,7 @@
    C API. */
 
 #include "sys-defines.h"
-#include <signal.h>		/* for kill() */
+#include "cygsignal.h"		/* for kill() */
 #include "extern.h"
 
 /* Sparse array of pointers to XPlotter instances, and its size.  Should be
