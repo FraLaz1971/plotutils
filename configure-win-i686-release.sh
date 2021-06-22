@@ -1,11 +1,16 @@
 ## warning
 ## you've to updated LDFLAGS with the real path to libpng
 ##
+export CPPFLAGS="-I/usr/X11R6/include"
+export CFLAGS="-I/usr/X11R6/include"
+export CXXFLAGS="-I/usr/X11R6/include"
+export LDFLAGS="-L/usr/X11R6/lib"
+export PATH=$PATH:"/usr/X11R6/bin"
 LIBPNGROOT="/home/serena/projects/2020-11-27/plotutils27"
 ./configure \
 --host=i686-w64-mingw32 \
 --target=i686-w64-mingw32 \
---prefix=/mingw32 \
+--prefix=/f/plotutils \
 --with-sysroot="$LIBPNGROOT" \
 --with-libpng \
 --with-x \
